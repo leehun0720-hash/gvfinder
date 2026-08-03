@@ -202,7 +202,7 @@ export default function Home() {
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
                 <span>공공데이터 API Key (data.go.kr)</span>
-                <a href="https://www.data.go.kr/data/15091144/openapi.do" target="_blank" rel="noreferrer" style={{ color: '#60a5fa', fontSize: '0.85rem', textDecoration: 'none' }}>키 발급받기 ↗</a>
+                <a href="https://www.data.go.kr/iim/api/selectAPIAc498View.do" target="_blank" rel="noreferrer" style={{ color: '#60a5fa', fontSize: '0.85rem', textDecoration: 'none' }}>공공데이터포털 바로가기 ↗</a>
               </label>
               <input 
                 type="password" 
