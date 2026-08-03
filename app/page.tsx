@@ -19,6 +19,7 @@ export default function Home() {
   // Settings Modal states
   const [showSettings, setShowSettings] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState('');
+  const [publicApiKeyInput, setPublicApiKeyInput] = useState('');
 
   // Load API key from localStorage on mount
   useEffect(() => {
@@ -26,10 +27,15 @@ export default function Home() {
     if (savedKey) {
       setApiKeyInput(savedKey);
     }
+    const savedPublicKey = localStorage.getItem('publicApiKey');
+    if (savedPublicKey) {
+      setPublicApiKeyInput(savedPublicKey);
+    }
   }, []);
 
   const saveSettings = () => {
     localStorage.setItem('geminiApiKey', apiKeyInput);
+    localStorage.setItem('publicApiKey', publicApiKeyInput);
     setShowSettings(false);
     alert("설정이 저장되었습니다.");
   };
@@ -39,6 +45,10 @@ export default function Home() {
     const savedKey = localStorage.getItem('geminiApiKey');
     if (savedKey) {
       headers['X-Gemini-Key'] = savedKey;
+    }
+    const savedPublicKey = localStorage.getItem('publicApiKey');
+    if (savedPublicKey) {
+      headers['X-Public-API-Key'] = savedPublicKey;
     }
     return headers;
   };
@@ -136,7 +146,8 @@ export default function Home() {
             width: '90%', maxWidth: '400px', border: '1px solid var(--border-color)', boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
           }}>
             <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>⚙️ 시스템 설정</h2>
-            <div style={{ marginBottom: '1.5rem' }}>
+            
+            <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Gemini API Key</label>
               <input 
                 type="password" 
@@ -145,7 +156,18 @@ export default function Home() {
                 placeholder="AIzaSy..."
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(0,0,0,0.2)', color: '#fff' }}
               />
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>브라우저(로컬)에만 안전하게 저장됩니다.</p>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>공공데이터 API Key (data.go.kr)</label>
+              <input 
+                type="password" 
+                value={publicApiKeyInput}
+                onChange={(e) => setPublicApiKeyInput(e.target.value)}
+                placeholder="인코딩된 인증키 입력..."
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(0,0,0,0.2)', color: '#fff' }}
+              />
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>* 브라우저(로컬)에만 안전하게 보관됩니다.</p>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
               <button onClick={() => setShowSettings(false)} className="btn" style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)' }}>취소</button>
