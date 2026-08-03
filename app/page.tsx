@@ -20,6 +20,13 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [publicApiKeyInput, setPublicApiKeyInput] = useState('');
+  
+  // Status check states
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [apiStatus, setApiStatus] = useState<{
+    gemini?: { status: string, message: string },
+    publicApi?: { status: string, message: string }
+  } | null>(null);
 
   // Load API key from localStorage on mount
   useEffect(() => {
@@ -40,17 +47,34 @@ export default function Home() {
     alert("설정이 저장되었습니다.");
   };
 
-  const getHeaders = () => {
+  const getHeaders = (geminiKeyOverride?: string, publicKeyOverride?: string) => {
     const headers: Record<string, string> = {};
-    const savedKey = localStorage.getItem('geminiApiKey');
+    const savedKey = geminiKeyOverride ?? localStorage.getItem('geminiApiKey');
     if (savedKey) {
       headers['X-Gemini-Key'] = savedKey;
     }
-    const savedPublicKey = localStorage.getItem('publicApiKey');
+    const savedPublicKey = publicKeyOverride ?? localStorage.getItem('publicApiKey');
     if (savedPublicKey) {
       headers['X-Public-API-Key'] = savedPublicKey;
     }
     return headers;
+  };
+
+  const checkStatus = async () => {
+    setIsCheckingStatus(true);
+    setApiStatus(null);
+    try {
+      const res = await fetch('/api/status', {
+        headers: getHeaders(apiKeyInput, publicApiKeyInput)
+      });
+      const data = await res.json();
+      setApiStatus(data);
+    } catch (e) {
+      console.error(e);
+      alert("상태 확인 중 오류가 발생했습니다.");
+    } finally {
+      setIsCheckingStatus(false);
+    }
   };
 
   const fetchMatches = async () => {
@@ -133,6 +157,20 @@ export default function Home() {
     }
   };
 
+  const getStatusColor = (status?: string) => {
+    if (status === 'success') return '#10b981'; // green
+    if (status === 'warning') return '#f59e0b'; // yellow
+    if (status === 'error') return '#ef4444'; // red
+    return 'var(--text-muted)';
+  };
+
+  const getStatusIcon = (status?: string) => {
+    if (status === 'success') return '🟢';
+    if (status === 'warning') return '🟡';
+    if (status === 'error') return '🔴';
+    return '⚪';
+  };
+
   return (
     <div className="container" style={{ position: 'relative' }}>
       {showSettings && (
@@ -143,9 +181,9 @@ export default function Home() {
         }}>
           <div style={{
             backgroundColor: 'var(--card-bg)', padding: '2rem', borderRadius: '12px',
-            width: '90%', maxWidth: '400px', border: '1px solid var(--border-color)', boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+            width: '90%', maxWidth: '450px', border: '1px solid var(--border-color)', boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
           }}>
-            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>⚙️ 시스템 설정</h2>
+            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>⚙️ 시스템 설정 및 API 상태</h2>
             
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Gemini API Key</label>
@@ -169,8 +207,35 @@ export default function Home() {
               />
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>* 브라우저(로컬)에만 안전하게 보관됩니다.</p>
             </div>
+
+            <div style={{ padding: '1rem', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '1rem', margin: 0 }}>API 연결 상태 확인</h3>
+                <button onClick={checkStatus} disabled={isCheckingStatus} className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                  {isCheckingStatus ? '확인 중...' : '테스트 시작'}
+                </button>
+              </div>
+              
+              {apiStatus && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Gemini AI</span>
+                    <span style={{ color: getStatusColor(apiStatus.gemini?.status) }}>
+                      {getStatusIcon(apiStatus.gemini?.status)} {apiStatus.gemini?.message}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>공공데이터포털</span>
+                    <span style={{ color: getStatusColor(apiStatus.publicApi?.status), textAlign: 'right' }}>
+                      {getStatusIcon(apiStatus.publicApi?.status)} {apiStatus.publicApi?.message}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-              <button onClick={() => setShowSettings(false)} className="btn" style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)' }}>취소</button>
+              <button onClick={() => setShowSettings(false)} className="btn" style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)' }}>닫기</button>
               <button onClick={saveSettings} className="btn">저장</button>
             </div>
           </div>
