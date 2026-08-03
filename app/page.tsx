@@ -186,7 +186,10 @@ export default function Home() {
             <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>⚙️ 시스템 설정 및 API 상태</h2>
             
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Gemini API Key</label>
+              <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
+                <span>Gemini API Key</span>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ color: '#60a5fa', fontSize: '0.85rem', textDecoration: 'none' }}>키 발급받기 ↗</a>
+              </label>
               <input 
                 type="password" 
                 value={apiKeyInput}
@@ -197,7 +200,10 @@ export default function Home() {
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>공공데이터 API Key (data.go.kr)</label>
+              <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
+                <span>공공데이터 API Key (data.go.kr)</span>
+                <a href="https://www.data.go.kr/data/15091144/openapi.do" target="_blank" rel="noreferrer" style={{ color: '#60a5fa', fontSize: '0.85rem', textDecoration: 'none' }}>키 발급받기 ↗</a>
+              </label>
               <input 
                 type="password" 
                 value={publicApiKeyInput}
