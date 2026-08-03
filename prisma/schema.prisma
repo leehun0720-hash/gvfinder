@@ -1,0 +1,45 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Document {
+  id               String   @id @default(cuid())
+  fileName         String
+  extractedText    String
+  analyzedProfile  String?  // JSON stringified profile from Gemini
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  matches          ContractMatch[]
+}
+
+model Contract {
+  id            String   @id @default(cuid())
+  sourcePortal  String   // e.g. "보조금통합포털", "지방재정365", "e나라도움"
+  title         String
+  description   String?
+  url           String?
+  department    String?
+  publishedAt   DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  matches       ContractMatch[]
+}
+
+model ContractMatch {
+  id          String   @id @default(cuid())
+  documentId  String
+  contractId  String
+  score       Int      // 0-100 Match score
+  reason      String?  // Match reasoning
+  isNotified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, contractId])
+}
