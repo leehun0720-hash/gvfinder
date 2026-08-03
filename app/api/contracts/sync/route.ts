@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Mock data generator for the 3 specified portals
 function generateMockContracts() {
@@ -26,7 +26,7 @@ function generateMockContracts() {
 
 export async function POST(req: NextRequest) {
   try {
-    const openaiKey = req.headers.get('x-openai-key') || process.env.OPENAI_API_KEY;
+    const geminiKey = req.headers.get('x-gemini-key') || process.env.GEMINI_API_KEY;
     const mockContracts = generateMockContracts();
     const savedContracts = [];
 
@@ -41,9 +41,11 @@ export async function POST(req: NextRequest) {
     // Get all documents (profiles)
     const documents = await prisma.document.findMany();
     
-    let openai: OpenAI | null = null;
-    if (openaiKey) {
-      openai = new OpenAI({ apiKey: openaiKey });
+    let genAI = null;
+    let model = null;
+    if (geminiKey) {
+      genAI = new GoogleGenerativeAI(geminiKey);
+      model = genAI.getGenerativeModel({ model: "gemini-pro" });
     }
 
     let matchCount = 0;
@@ -57,7 +59,7 @@ export async function POST(req: NextRequest) {
         let score = 0;
         let reason = "AI 분석 전";
 
-        if (openai) {
+        if (model) {
           const prompt = `
 기업 프로필과 공공사업 공고를 비교하여 매칭 점수를 계산해주세요.
 
@@ -68,14 +70,9 @@ export async function POST(req: NextRequest) {
 {"score": 0~100사이숫자, "reason": "매칭된 이유 1줄 요약"}
 `;
           try {
-            const response = await openai.chat.completions.create({
-              model: "gpt-3.5-turbo",
-              messages: [{ role: "user", content: prompt }],
-              response_format: { type: "json_object" }
-            });
-            const text = response.choices[0].message.content || "{}";
-            const cleanedText = text.replace(/```json\n/g, '').replace(/```/g, '').trim();
-            const aiMatch = JSON.parse(cleanedText);
+            const result = await model.generateContent(prompt);
+            const text = result.response.text().replace(/```json\n/g, '').replace(/```/g, '').trim();
+            const aiMatch = JSON.parse(text);
             score = aiMatch.score;
             reason = aiMatch.reason;
           } catch (e) {

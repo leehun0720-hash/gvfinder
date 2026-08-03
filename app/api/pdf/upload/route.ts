@@ -6,7 +6,7 @@ if (typeof global.DOMMatrix === 'undefined') {
 }
 const pdf = require('pdf-parse');
 import prisma from '@/lib/prisma';
-import { extractBusinessProfile } from '@/lib/openai';
+import { extractBusinessProfile } from '@/lib/gemini';
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,8 +25,8 @@ export async function POST(req: NextRequest) {
     const text = data.text;
 
     // Extract profile using Gemini
-    const openaiKey = req.headers.get('x-openai-key') || undefined;
-    const profile = await extractBusinessProfile(text, openaiKey);
+    const geminiKey = req.headers.get('x-gemini-key') || undefined;
+    const profile = await extractBusinessProfile(text, geminiKey);
 
     // Save to database
     const document = await prisma.document.create({

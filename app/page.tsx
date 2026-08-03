@@ -24,13 +24,13 @@ export default function Home() {
   // Status check states
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [apiStatus, setApiStatus] = useState<{
-    openai?: { status: string, message: string },
+    gemini?: { status: string, message: string },
     publicApi?: { status: string, message: string }
   } | null>(null);
 
   // Load API key from localStorage on mount
   useEffect(() => {
-    const savedKey = localStorage.getItem('openaiApiKey');
+    const savedKey = localStorage.getItem('geminiApiKey');
     if (savedKey) {
       setApiKeyInput(savedKey);
     }
@@ -41,7 +41,7 @@ export default function Home() {
   }, []);
 
   const saveSettings = () => {
-    localStorage.setItem('openaiApiKey', apiKeyInput);
+    localStorage.setItem('geminiApiKey', apiKeyInput);
     localStorage.setItem('publicApiKey', publicApiKeyInput);
     setShowSettings(false);
     alert("설정이 저장되었습니다.");
@@ -49,9 +49,9 @@ export default function Home() {
 
   const getHeaders = (geminiKeyOverride?: string, publicKeyOverride?: string) => {
     const headers: Record<string, string> = {};
-    const savedKey = geminiKeyOverride ?? localStorage.getItem('openaiApiKey');
+    const savedKey = geminiKeyOverride ?? localStorage.getItem('geminiApiKey');
     if (savedKey) {
-      headers['X-OpenAI-Key'] = savedKey;
+      headers['X-Gemini-Key'] = savedKey;
     }
     const savedPublicKey = publicKeyOverride ?? localStorage.getItem('publicApiKey');
     if (savedPublicKey) {
@@ -187,14 +187,14 @@ export default function Home() {
             
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
-                <span>OpenAI API Key (ChatGPT)</span>
-                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" style={{ color: '#60a5fa', fontSize: '0.85rem', textDecoration: 'none' }}>키 발급받기 ↗</a>
+                <span>Gemini API Key</span>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ color: '#60a5fa', fontSize: '0.85rem', textDecoration: 'none' }}>키 발급받기 ↗</a>
               </label>
               <input 
                 type="password" 
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="sk-..."
+                placeholder="AIzaSy..."
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(0,0,0,0.2)', color: '#fff' }}
               />
             </div>
@@ -225,9 +225,9 @@ export default function Home() {
               {apiStatus && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>ChatGPT (OpenAI)</span>
-                    <span style={{ color: getStatusColor(apiStatus.openai?.status) }}>
-                      {getStatusIcon(apiStatus.openai?.status)} {apiStatus.openai?.message}
+                    <span>Gemini AI</span>
+                    <span style={{ color: getStatusColor(apiStatus.gemini?.status) }}>
+                      {getStatusIcon(apiStatus.gemini?.status)} {apiStatus.gemini?.message}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
