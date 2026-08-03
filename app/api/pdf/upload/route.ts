@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
     const text = data.text;
 
     // Extract profile using Gemini
-    const profile = await extractBusinessProfile(text);
+    const geminiKey = req.headers.get('x-gemini-key') || undefined;
+    const profile = await extractBusinessProfile(text, geminiKey);
 
     // Save to database
     const document = await prisma.document.create({

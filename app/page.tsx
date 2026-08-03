@@ -16,9 +16,36 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  // Settings Modal states
+  const [showSettings, setShowSettings] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState('');
+
+  // Load API key from localStorage on mount
+  useEffect(() => {
+    const savedKey = localStorage.getItem('geminiApiKey');
+    if (savedKey) {
+      setApiKeyInput(savedKey);
+    }
+  }, []);
+
+  const saveSettings = () => {
+    localStorage.setItem('geminiApiKey', apiKeyInput);
+    setShowSettings(false);
+    alert("설정이 저장되었습니다.");
+  };
+
+  const getHeaders = () => {
+    const headers: Record<string, string> = {};
+    const savedKey = localStorage.getItem('geminiApiKey');
+    if (savedKey) {
+      headers['X-Gemini-Key'] = savedKey;
+    }
+    return headers;
+  };
+
   const fetchMatches = async () => {
     try {
-      const res = await fetch('/api/contracts/matches');
+      const res = await fetch('/api/contracts/matches', { headers: getHeaders() });
       const data = await res.json();
       setMatches(data.matches || []);
     } catch (err) {
@@ -42,6 +69,7 @@ export default function Home() {
       try {
         const res = await fetch('/api/pdf/upload', {
           method: 'POST',
+          headers: getHeaders(),
           body: formData,
         });
         const data = await res.json();
@@ -59,7 +87,10 @@ export default function Home() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const res = await fetch('/api/contracts/sync', { method: 'POST' });
+      const res = await fetch('/api/contracts/sync', { 
+        method: 'POST',
+        headers: getHeaders()
+      });
       const data = await res.json();
       if (data.success) {
         alert(`새로운 공고 ${data.syncedContracts}건이 동기화되었고, ${data.newMatches}건의 새로운 매칭이 발견되었습니다.`);
@@ -80,7 +111,9 @@ export default function Home() {
     }
     setIsSearching(true);
     try {
-      const res = await fetch(`/api/contracts/search?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`/api/contracts/search?q=${encodeURIComponent(searchQuery)}`, {
+        headers: getHeaders()
+      });
       const data = await res.json();
       setSearchResults(data.contracts || []);
     } catch (err) {
@@ -91,10 +124,43 @@ export default function Home() {
   };
 
   return (
-    <div className="container">
+    <div className="container" style={{ position: 'relative' }}>
+      {showSettings && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'var(--card-bg)', padding: '2rem', borderRadius: '12px',
+            width: '90%', maxWidth: '400px', border: '1px solid var(--border-color)', boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+          }}>
+            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>⚙️ 시스템 설정</h2>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Gemini API Key</label>
+              <input 
+                type="password" 
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="AIzaSy..."
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(0,0,0,0.2)', color: '#fff' }}
+              />
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>브라우저(로컬)에만 안전하게 저장됩니다.</p>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <button onClick={() => setShowSettings(false)} className="btn" style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)' }}>취소</button>
+              <button onClick={saveSettings} className="btn">저장</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="dashboard-header">
         <h1 className="dashboard-title">국비 공모 파인더</h1>
-        <div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn" onClick={() => setShowSettings(true)} style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)' }}>
+            ⚙️ 설정
+          </button>
           <button className="btn" onClick={handleSync} disabled={syncing}>
             {syncing ? <div className="loading-spinner"></div> : <RefreshCw size={18} />}
             공고 동기화 (보조금통합, 지방재정365)

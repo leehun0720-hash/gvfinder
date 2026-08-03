@@ -26,6 +26,7 @@ function generateMockContracts() {
 
 export async function POST(req: NextRequest) {
   try {
+    const geminiKey = req.headers.get('x-gemini-key') || process.env.GEMINI_API_KEY;
     const mockContracts = generateMockContracts();
     const savedContracts = [];
 
@@ -39,8 +40,13 @@ export async function POST(req: NextRequest) {
 
     // Get all documents (profiles)
     const documents = await prisma.document.findMany();
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    let genAI = null;
+    let model = null;
+    if (geminiKey) {
+      genAI = new GoogleGenerativeAI(geminiKey);
+      model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    }
 
     let matchCount = 0;
 
@@ -53,7 +59,7 @@ export async function POST(req: NextRequest) {
         let score = 0;
         let reason = "AI 분석 전";
 
-        if (process.env.GEMINI_API_KEY) {
+        if (model) {
           const prompt = `
 기업 프로필과 공공사업 공고를 비교하여 매칭 점수를 계산해주세요.
 
@@ -75,9 +81,8 @@ export async function POST(req: NextRequest) {
             reason = "프로필 키워드 기반 매칭 (분석 오류 대체)";
           }
         } else {
-          // Fallback logic
-          score = Math.floor(Math.random() * 50) + 50;
-          reason = "임의 점수 부여 (Gemini API 키 누락)";
+          score = Math.floor(Math.random() * 50) + 50; // fallback random score
+          reason = "API 키 미설정으로 임의 생성된 매칭 사유입니다.";
         }
 
         // Only save matches > 60 score

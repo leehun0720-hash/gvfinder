@@ -1,10 +1,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize Gemini API
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
-export async function extractBusinessProfile(text: string) {
-  if (!process.env.GEMINI_API_KEY) {
+export async function extractBusinessProfile(text: string, apiKey?: string) {
+  const key = apiKey || process.env.GEMINI_API_KEY;
+  
+  if (!key) {
     console.warn("GEMINI_API_KEY is not set. Returning mock profile.");
     return {
       keywords: ["행정", "AI", "데이터", "스마트", "플랫폼"],
@@ -13,6 +12,8 @@ export async function extractBusinessProfile(text: string) {
       summary: "AI 기반 행정 전환(AX) 및 데이터 솔루션 구축 역량 보유"
     };
   }
+
+  const genAI = new GoogleGenerativeAI(key);
 
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 

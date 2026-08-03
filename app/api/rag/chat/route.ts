@@ -14,7 +14,12 @@ export async function POST(req: NextRequest) {
     // 2. Search DocumentChunk for similar embeddings
     // 3. Pass top chunks to LLM
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+    const geminiKey = req.headers.get('x-gemini-key') || process.env.GEMINI_API_KEY;
+    if (!geminiKey) {
+      return NextResponse.json({ error: 'Gemini API Key is missing. Please set it in Settings.' }, { status: 400 });
+    }
+
+    const genAI = new GoogleGenerativeAI(geminiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
     // Mock Retrieval Step
