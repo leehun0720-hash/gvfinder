@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     let model = null;
     if (geminiKey) {
       genAI = new GoogleGenerativeAI(geminiKey);
-      model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      model = genAI.getGenerativeModel({ model: "gemini-pro" });
     }
 
     let matchCount = 0;
