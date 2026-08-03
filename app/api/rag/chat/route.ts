@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     // Mock Retrieval Step
     const contextText = "이 공모사업의 핵심 평가 기준은 AI 기술의 실현 가능성과 지자체 데이터 연계성입니다.";

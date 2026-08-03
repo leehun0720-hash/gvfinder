@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   if (geminiKey) {
     try {
       const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
       const result = await model.generateContent("Hello");
       if (result.response.text()) {
         geminiStatus = { status: 'success', message: '정상 연결됨' };
