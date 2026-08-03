@@ -27,6 +27,29 @@ model Contract {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   matches       ContractMatch[]
+  attachments   RFPAttachment[]
+}
+
+model RFPAttachment {
+  id            String   @id @default(cuid())
+  contractId    String
+  fileName      String
+  fileUrl       String?
+  extractedText String?
+  createdAt     DateTime @default(now())
+
+  contract      Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  chunks        DocumentChunk[]
+}
+
+model DocumentChunk {
+  id              String   @id @default(cuid())
+  attachmentId    String
+  content         String
+  embedding       String?  // JSON stringified vector array (since SQLite doesn't natively support vectors without extensions)
+  chunkIndex      Int
+  
+  attachment      RFPAttachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
 }
 
 model ContractMatch {
