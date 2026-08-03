@@ -11,6 +11,11 @@ export default function Home() {
   const [matches, setMatches] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Search states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   const fetchMatches = async () => {
     // For this prototype, we'll fetch matches from a new API route or we could just use state.
     // Let's create an API route to fetch data if needed, or we just rely on state here.
@@ -49,13 +54,29 @@ export default function Home() {
       const data = await res.json();
       if (data.success) {
         alert(`새로운 공고 ${data.syncedContracts}건이 동기화되었고, ${data.newMatches}건의 새로운 매칭이 발견되었습니다.`);
-        // Here we ideally fetch matches from DB. For now, we'll just mock the matches state
-        // to show something in the UI since we don't have a GET endpoint yet.
       }
     } catch (err) {
       console.error(err);
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const res = await fetch(`/api/contracts/search?q=${encodeURIComponent(searchQuery)}`);
+      const data = await res.json();
+      setSearchResults(data.contracts || []);
+    } catch (err) {
+      console.error("Search failed", err);
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -124,8 +145,10 @@ export default function Home() {
         </section>
 
         <section className="card" style={{ gridColumn: 'span 2' }}>
-          <h2 className="card-title"><Bell size={20} /> 맞춤형 공모 알림</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 className="card-title" style={{ marginBottom: 0 }}><Bell size={20} /> 맞춤형 공모 알림</h2>
+          </div>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
             학습된 프로필을 바탕으로 추천된 정부/지자체 공모 사업입니다.
           </p>
 
@@ -141,7 +164,7 @@ export default function Home() {
                 행정안전부 • 지자체 행정업무의 AI(AX) 도입을 지원하는 보조금 사업입니다.
               </p>
               <div style={{ fontSize: '0.875rem', padding: '0.75rem', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '6px' }}>
-                <strong style={{ color: '#60a5fa' }}>AI 매칭 사유:</strong> 귀사의 &apos;AI 기반 행정 전환(AX)&apos; 역량과 정확히 일치하는 공모입니다.
+                <strong style={{ color: '#60a5fa' }}>AI 매칭 사유:</strong> 귀사의 'AI 기반 행정 전환(AX)' 역량과 정확히 일치하는 공모입니다.
               </div>
             </div>
 
@@ -155,10 +178,58 @@ export default function Home() {
                 전라남도 • 지역 맞춤형 데이터 솔루션 및 스마트시티 인프라 구축 공모
               </p>
               <div style={{ fontSize: '0.875rem', padding: '0.75rem', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '6px' }}>
-                <strong style={{ color: '#60a5fa' }}>AI 매칭 사유:</strong> &apos;데이터 솔루션 구축 역량&apos; 및 &apos;스마트시티&apos; 관심 분야와 부합합니다.
+                <strong style={{ color: '#60a5fa' }}>AI 매칭 사유:</strong> '데이터 솔루션 구축 역량' 및 '스마트시티' 관심 분야와 부합합니다.
               </div>
             </div>
           </div>
+        </section>
+
+        {/* Search Section */}
+        <section className="card" style={{ gridColumn: 'span 3', marginTop: '1rem' }}>
+          <h2 className="card-title"><Search size={20} /> 공모 과제 전체 검색</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            등록된 모든 정부 및 지자체 공모사업을 직접 검색해보세요.
+          </p>
+
+          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
+            <input
+              type="text"
+              className="input-field"
+              placeholder="검색어를 입력하세요 (예: 데이터, AI, 청년...)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ flex: 1, padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)', color: '#fff' }}
+            />
+            <button type="submit" className="btn" disabled={isSearching}>
+              {isSearching ? <div className="loading-spinner"></div> : <Search size={18} />}
+              검색
+            </button>
+          </form>
+
+          {searchResults.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+              {searchResults.map((contract) => (
+                <div key={contract.id} style={{ border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1.25rem', backgroundColor: 'var(--card-bg)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span className="badge">{contract.sourcePortal}</span>
+                  </div>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{contract.title}</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                    {contract.department}
+                  </p>
+                  <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>
+                    {contract.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            searchQuery && !isSearching && (
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                검색 결과가 없습니다.
+              </div>
+            )
+          )}
         </section>
       </main>
     </div>
