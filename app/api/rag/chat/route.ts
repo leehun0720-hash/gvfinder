@@ -1,45 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import prisma from '@/lib/prisma';
+import OpenAI from 'openai';
 
 export async function POST(req: NextRequest) {
   try {
-    const { contractId, question } = await req.json();
-    if (!contractId || !question) {
-      return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+    const data = await req.json();
+    const { messages } = data; // Array of { role: 'user'|'model', content: string }
+
+    if (!messages || messages.length === 0) {
+      return NextResponse.json({ error: 'Messages array is required' }, { status: 400 });
     }
 
-    // In a real RAG system:
-    // 1. Embed the question
-    // 2. Search DocumentChunk for similar embeddings
-    // 3. Pass top chunks to LLM
-
-    const geminiKey = req.headers.get('x-gemini-key') || process.env.GEMINI_API_KEY;
-    if (!geminiKey) {
-      return NextResponse.json({ error: 'Gemini API Key is missing. Please set it in Settings.' }, { status: 400 });
+    const openaiKey = req.headers.get('x-openai-key') || process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
+      return NextResponse.json({ error: 'OpenAI API Key is missing. Please set it in Settings.' }, { status: 400 });
     }
 
-    const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const openai = new OpenAI({ apiKey: openaiKey });
 
     // Mock Retrieval Step
     const contextText = "이 공모사업의 핵심 평가 기준은 AI 기술의 실현 가능성과 지자체 데이터 연계성입니다.";
 
-    const prompt = `
-사용자 질문: ${question}
+    const systemPrompt = `
+당신은 국비 공모사업 제안서를 작성하고 분석하는 AI 어시스턴트 '공고 파인더' 입니다.
+사용자의 질문에 대해 아래 참고 자료(Context)를 바탕으로 전문적이고 도움이 되는 답변을 작성해주세요.
 
-공모사업 컨텍스트:
+[참고 자료]
 ${contextText}
-
-컨텍스트를 바탕으로 답변해주세요.
 `;
 
-    const result = await model.generateContent(prompt);
-    const answer = await result.response.text();
+    // Map messages to OpenAI format
+    const formattedMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages.map((m: any) => ({
+        role: m.role === 'model' ? 'assistant' : m.role,
+        content: m.content
+      }))
+    ];
 
-    return NextResponse.json({ answer });
-  } catch (error) {
-    console.error("RAG Chat error:", error);
-    return NextResponse.json({ error: 'Failed to process chat' }, { status: 500 });
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: formattedMessages
+    });
+
+    const reply = response.choices[0].message.content || "";
+
+    return NextResponse.json({ reply });
+  } catch (error: any) {
+    console.error(error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

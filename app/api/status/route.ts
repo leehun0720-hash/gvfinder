@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 
 export async function GET(req: NextRequest) {
-  const geminiKey = req.headers.get('x-gemini-key');
+  const openaiKey = req.headers.get('x-openai-key');
   const publicKey = req.headers.get('x-public-api-key');
 
-  let geminiStatus = { status: 'idle', message: '미설정' };
+  let openaiStatus = { status: 'idle', message: '미설정' };
   let publicApiStatus = { status: 'idle', message: '미설정' };
 
-  // Test Gemini
-  if (geminiKey) {
+  // Test OpenAI
+  if (openaiKey) {
     try {
-      const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      const result = await model.generateContent("Hello");
-      if (result.response.text()) {
-        geminiStatus = { status: 'success', message: '정상 연결됨' };
+      const openai = new OpenAI({ apiKey: openaiKey });
+      const response = await openai.models.list();
+      
+      if (response.data && response.data.length > 0) {
+        openaiStatus = { status: 'success', message: '정상 연결됨' };
       } else {
-        geminiStatus = { status: 'error', message: '응답을 받을 수 없음' };
+        openaiStatus = { status: 'error', message: '응답을 받을 수 없음' };
       }
     } catch (e: any) {
-      geminiStatus = { status: 'error', message: e.message || '인증 실패' };
+      openaiStatus = { status: 'error', message: e.message || '인증 실패' };
     }
   }
 
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    gemini: geminiStatus,
+    openai: openaiStatus,
     publicApi: publicApiStatus
   });
 }
