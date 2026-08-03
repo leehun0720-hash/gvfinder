@@ -53,7 +53,8 @@ export async function GET(req: NextRequest) {
         }
       }
     } catch (e: any) {
-      publicApiStatus = { status: 'error', message: e.message || '네트워크 에러' };
+      const errorMsg = e.message || '네트워크 에러';
+      publicApiStatus = { status: 'error', message: errorMsg.includes('fetch failed') ? '서버 네트워크 연결 오류 (일시적)' : errorMsg };
     }
   }
 
